@@ -13,6 +13,12 @@
     </header>
 
     <main>
+      <!-- map area inserted to show activities geographically -->
+      <section id="map-container">
+        <h3>Map View</h3>
+        <div id="map"></div>
+      </section>
+
       <section id="activities-container">
         <h3>Available Activities</h3>
         <div id="activities-list">
@@ -45,6 +51,8 @@
       <p>&copy; 2023 Mergington High School</p>
     </footer>
 
+    <!-- Google Maps API (replace YOUR_API_KEY with an actual key) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
     <script src="app.js"></script>
   </body>
 </html>

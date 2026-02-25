@@ -1,8 +1,14 @@
-document.addEventListener("DOMContentLoaded", () => {
+let map;
+let markers = [];
+
+document.addEventListener("DOMContentLoaded", async () => {
   const activitiesList = document.getElementById("activities-list");
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+
+  // initialize the map first so we can add markers later
+  await initMap();
 
   // Function to fetch activities from API
   async function fetchActivities() {
@@ -60,6 +66,11 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".delete-btn").forEach((button) => {
         button.addEventListener("click", handleUnregister);
       });
+
+      // once we have the activities, add markers to map
+      if (map) {
+        addMarkers(activities);
+      }
     } catch (error) {
       activitiesList.innerHTML =
         "<p>Failed to load activities. Please try again later.</p>";
@@ -158,3 +169,77 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize app
   fetchActivities();
 });
+
+// map utility functions
+
+async function initMap() {
+  const defaultPos = { lat: 37.7749, lng: -122.4194 };
+  return new Promise((resolve) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          initMapWithCenter({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+          resolve();
+        },
+        () => {
+          initMapWithCenter(defaultPos);
+          resolve();
+        }
+      );
+    } else {
+      initMapWithCenter(defaultPos);
+      resolve();
+    }
+  });
+}
+
+function initMapWithCenter(center) {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center,
+    zoom: 13,
+  });
+}
+
+function clearMarkers() {
+  markers.forEach((m) => m.setMap(null));
+  markers = [];
+}
+
+function addMarkers(activities) {
+  clearMarkers();
+  Object.entries(activities).forEach(([name, details]) => {
+    if (details.coords && details.type) {
+      const iconUrl = getIconForType(details.type);
+      const marker = new google.maps.Marker({
+        position: details.coords,
+        map,
+        title: name,
+        icon: iconUrl,
+      });
+      const infoWindow = new google.maps.InfoWindow({
+        content: `<strong>${name}</strong><br>${details.type} - ${details.schedule}`,
+      });
+      marker.addListener("click", () => {
+        infoWindow.open(map, marker);
+      });
+      markers.push(marker);
+    }
+  });
+}
+
+function getIconForType(type) {
+  // simple color mapping using Google Maps default markers
+  switch (type.toLowerCase()) {
+    case "academic":
+      return "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+    case "sports":
+      return "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
+    case "misc":
+      return "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+    default:
+      return null;
+  }
+}
